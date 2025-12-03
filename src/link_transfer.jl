@@ -1,3 +1,12 @@
+"""
+LinkTransferMatrix
+
+The link part of the transfer matrix for a LEMPO.
+
+# Arguments
+- `F`: A function that takes a link representation and returns a scalar, or `missing` if the function is zero.
+- `isflipped`: A boolean indicating whether the transfer matrix is flipped (i.e., the link operator acts on bra links rather than ket links).
+"""
 struct LinkTransferMatrix <: AbstractTransferMatrix
     F::Union{Function,Missing}
     isflipped::Bool

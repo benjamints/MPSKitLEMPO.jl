@@ -11,6 +11,16 @@ function buildSparseId(T, Pspaces)
     return Os
 end
 
+"""
+link_expectation(state, loc, F)
+
+Calculate the expectation value of a link operator `F` at a given location `loc` in the state `state`.
+
+# Arguments
+`state`: The MPS state.
+`loc::Int`: The location of the link operator.
+`F::Function`: A function that takes a link representation and returns a scalar.
+"""
 function link_expectation(state, loc::Int, F::Function)
     S = zero(real(scalartype(state)))
     for (c, b) in entanglement_spectrum(state, loc)

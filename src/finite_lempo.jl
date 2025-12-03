@@ -1,3 +1,12 @@
+"""
+`FiniteLEMPOHamiltonian(mpo::FiniteMPOHamiltonian, Fs::Vector{Union{Missing, Function}})`
+
+Constructs a finite LEMPO, represented as an MPO together with a vector of link functions.
+
+# Arguments:
+- `mpo`: The finite MPO Hamiltonian.
+- `Fs`: A vector of link functions, where each function takes a link representation and returns a scalar (or is `missing`, if the function is zero).
+"""
 struct FiniteLEMPOHamiltonian{O} <: AbstractMPO{O}
     mpo::FiniteMPOHamiltonian{O}
     Fs::Vector{Union{Missing, Function}}
@@ -10,6 +19,16 @@ struct FiniteLEMPOHamiltonian{O} <: AbstractMPO{O}
     end
 end
 
+"""
+`FiniteLEMPOHamiltonian(T, Pspaces, Fs::Vector{Union{Missing, Function}})`
+
+Constructs a finite LEMPO Hamiltonian that only acts nontrivially on links.
+
+# Arguments
+- `T`: The type of the scalars in the Hamiltonian.
+- `Pspaces`: A vector of physical spaces.
+- `Fs`: A vector of link functions, where each function takes a link representation and returns a scalar (or is `missing`, if the function is zero).
+"""
 function FiniteLEMPOHamiltonian(T::Type, Pspaces, Fs)
     if length(Fs) != length(Pspaces) - 1
         throw(ArgumentError("Lengths do not match"))

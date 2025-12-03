@@ -1,5 +1,13 @@
+"""
+`left_link(envs, H)`
 
-function left_link(envs, H)
+Acts on the left environment of `envs` with the link transfer matrix of the LEMPO `H`, returning new environments.
+
+# Arguments
+- `envs`: The infinite environments.
+- `H`: The infinite LEMPO Hamiltonian.
+"""
+function left_link(envs::InfiniteEnvironments, H::InfiniteLEMPOHamiltonian)
     GLs = similar(envs.GLs)
      for i in eachindex(envs.GLs)
         GLs[i] = envs.GLs[i] * LinkTransferMatrix(H.Fs[i - 1])
