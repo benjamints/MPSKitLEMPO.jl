@@ -7,7 +7,7 @@ using MPSKit
 using MPSKit: AbstractTransferMatrix, TransferMatrix, FiniteEnvironments, AbstractMPSEnvironments, _HAM_MPS_TYPES, AC_hamiltonian, DerivativeOperator, JordanMPO_AC2_Hamiltonian, MPOTensor, AC2_hamiltonian, initialize_environments, InfiniteEnvironments
 using MPSKit: recalculate!, issamespace, environment_alg, check_length, isidentitylevel, isemptylevel, regularize, linsolve, jordanmpotensortype, SumSpace, eachspace, contract_mpo_expval, InfiniteQPEnvironments
 using MPSKit: InfiniteQP, compute_leftenvs!, compute_rightenvs!, left_cyclethrough!, right_cyclethrough!, allocate_GBL, allocate_GBR, istrivial, left_excitation_transfer_system, right_excitation_transfer_system, regularize!, ProductTransferMatrix
-using MPSKit: Defaults, _effective_excitation_local_apply, istopological
+using MPSKit: Defaults, _effective_excitation_local_apply, istopological, GenericMPSTensor, leftenv, rightenv
 
 export FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian
 export LinkTransferMatrix

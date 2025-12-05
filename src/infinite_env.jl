@@ -1,21 +1,4 @@
-"""
-`left_link(envs, H)`
-
-Acts on the left environment of `envs` with the link transfer matrix of the LEMPO `H`, returning new environments.
-
-# Arguments
-- `envs`: The infinite environments.
-- `H`: The infinite LEMPO Hamiltonian.
-"""
-function left_link(envs::InfiniteEnvironments, H::InfiniteLEMPOHamiltonian)
-    GLs = similar(envs.GLs)
-     for i in eachindex(envs.GLs)
-        GLs[i] = envs.GLs[i] * LinkTransferMatrix(H.Fs[i - 1])
-    end
-    return InfiniteEnvironments(GLs, envs.GRs)
-end
-
-# Conventions: 
+# Conventions:
 # GL = ... * (link) * (MPO)
 # GR = (link) * (MPO) * ...
 # So when computing expecation values, derivatives etc. GL should be multiplied by link operator in addition to A
@@ -104,10 +87,6 @@ function MPSKit.compute_leftenvs!(
         end
     end
 
-    # for i in eachindex(GLs)
-    #     GLs[i] = GLs[i] * LinkTransferMatrix(operator.Fs[i - 1])
-    # end
-
     return GLs
 end
 
@@ -120,8 +99,7 @@ function MPSKit.left_cyclethrough!(
     leftinds = 1:index
     for site in eachindex(GL)
         if index == vsize
-            B = GL[site] * LinkTransferMatrix(H.Fs[site])
-            GL[site + 1][index] = B * TransferMatrix(
+            GL[site + 1][index] = (GL[site] * LinkTransferMatrix(H.Fs[site - 1])) * TransferMatrix(
                 above.AL[site], H[site][leftinds, 1, 1, index], below.AL[site]
             )
         else
@@ -201,7 +179,7 @@ function MPSKit.right_cyclethrough!(
         ) * GR[site][rightinds]
 
         if index == 1
-            GR[site - 1] = LinkTransferMatrix(operator.Fs[site]) * GR[site - 1]
+            GR[site - 1] = LinkTransferMatrix(operator.Fs[site - 1]) * GR[site - 1]
         end
     end
     return GR

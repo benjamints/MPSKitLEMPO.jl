@@ -5,18 +5,23 @@ struct LEMPO_AC2 <: DerivativeOperator
     RE::TensorMap
 end
 
+struct EnvironmentsContainer{V <: GenericMPSTensor}
+    GL::V
+    GR::V
+end
+
+function EnvironmentsContainer(GL, GR)
+    return EnvironmentsContainer{typeof(V)}(GL, GR)
+end
+
+MPSKit.leftenv(envs::EnvironmentsContainer, site::Int, state) = envs.GL
+MPSKit.rightenv(envs::EnvironmentsContainer, site::Int, state) = envs.GR
+
 function MPSKit.AC_hamiltonian(
         site::Int, below::_HAM_MPS_TYPES, operator::FiniteLEMPOHamiltonian,
         above::_HAM_MPS_TYPES, envs
     )
     return AC_hamiltonian(site, below, operator.mpo, above, envs)
-end
-
-function MPSKit.AC_hamiltonian(
-        site::Int, below::_HAM_MPS_TYPES, operator::InfiniteLEMPOHamiltonian,
-        above::_HAM_MPS_TYPES, envs
-    )
-    return AC_hamiltonian(site, below, operator.mpo, above, left_link(envs, operator))
 end
 
 function MPSKit.AC2_hamiltonian(
@@ -26,12 +31,24 @@ function MPSKit.AC2_hamiltonian(
     return LEMPO_AC2(AC2_hamiltonian(site, below, operator.mpo, above, envs), operator.Fs[site], leftenv(envs, site, below)[1], rightenv(envs, site + 1, below)[end])
 end
 
+function MPSKit.AC_hamiltonian(
+        site::Int, below::_HAM_MPS_TYPES, operator::InfiniteLEMPOHamiltonian,
+        above::_HAM_MPS_TYPES, envs
+    )
+    envC = EnvironmentsContainer(leftenv(envs, site, below) * LinkTransferMatrix(operator.Fs[site - 1]), rightenv(envs, site, below))
+    return AC_hamiltonian(site, below, operator.mpo, above, envC)
+end
+
 function MPSKit.AC2_hamiltonian(
         site::Int, below::_HAM_MPS_TYPES, operator::InfiniteLEMPOHamiltonian,
         above::_HAM_MPS_TYPES, envs
     )
-    env1 = left_link(envs, operator)
-    return LEMPO_AC2(AC2_hamiltonian(site, below, operator.mpo, above, envs1), operator.Fs[site], leftenv(envs1, site, below)[1], rightenv(envs1, site + 1, below)[end])
+    envC = EnvironmentsContainer(leftenv(envs, site, below) * LinkTransferMatrix(operator.Fs[site - 1]), rightenv(envs, site + 1, below))
+    if ismissing(operator.Fs[site])
+        return AC2_hamiltonian(site, below, operator.mpo, above, envC)
+    else
+        return LEMPO_AC2(AC2_hamiltonian(site, below, operator.mpo, above, envC), operator.Fs[site], envC.GL[1], envC.GR[end])
+    end
 end
 
 function (P::LEMPO_AC2)(v::MPOTensor)
