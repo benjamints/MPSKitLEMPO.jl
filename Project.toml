@@ -1,7 +1,7 @@
 name = "MPSKitLEMPO"
 uuid = "def4d40e-06d3-41a1-a405-61dcef04a768"
-authors = ["Benjamin Søgaard"]
 version = "0.1.0"
+authors = ["Benjamin Søgaard"]
 
 [deps]
 BlockTensorKit = "5f87ffc2-9cf1-4a46-8172-465d160bd8cd"
@@ -11,6 +11,9 @@ MPSKitModels = "ca635005-6f8c-4cd1-b51d-8491250ef2ab"
 OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
 TensorKit = "07d1fe3e-3e46-537d-9eac-e9e13d0d4cec"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+MPSKit = {rev = "main", url = "https://github.com/QuantumKitHub/MPSKit.jl"}
 
 [compat]
 BlockTensorKit = "0.3.1"

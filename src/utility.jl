@@ -23,8 +23,10 @@ Calculate the expectation value of a link operator `F` at a given location `loc`
 """
 function link_expectation(state, loc::Int, F::Function)
     S = zero(real(scalartype(state)))
-    for (c, b) in entanglement_spectrum(state, loc)
-        S += oftype(S, F(c) * dim(c) * sum(x^2 for x in b))
+    for (c, b) in blocks(state.C[loc])
+        S += oftype(S, F(c) * dim(c) * tr(b * b'))
     end
     return S
 end
+
+link_expectation(state, locs, F::Function) = sum(link_expectation(state, loc, F) for loc in locs)
