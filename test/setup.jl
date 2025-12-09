@@ -3,6 +3,31 @@ using TensorKit, MPSKit, MPSKitLEMPO
 
 export finite_heisenberg_gauss, finite_heisenberg_link, infinite_heisenberg_link, infinite_heisenberg
 export infinite_z2_gauge, infinite_z2_spin, energies
+export ℤₙU, ℤₙV⁺V, ℂₙU, ℂₙV, ℤₙf
+
+function ℤₙV(N::Int)
+    P = ZNSpace{N}(k => 1 for k in 1:N)
+    V = ZNSpace{N}(1 => 1)
+    return ones(ComplexF64, V ⊗ P ← P)
+end
+
+function ℤₙU(N::Int)
+    P = ZNSpace{N}(k => 1 for k in 1:N)
+    X = zeros(ComplexF64, P ← P)
+    for (s, b) in blocks(X)
+        b .= cis(2 * pi * s.n / N)
+    end
+    return X
+end
+function ℤₙV⁺V(N::Int)
+    X = ℤₙV(N)
+    return @tensor H[-1 -2; -3 -4] := conj(X[1 -3; -1]) * X[1 -2; -4]
+end
+
+ℤₙf(r) = 2 * cos(2 * pi * r.n / typeof(r).parameters[1])
+
+ℂₙU(N::Int) = TensorMap([i == j ? cis(2 * pi * i / N) : zero(ComplexF64) for i in 0:(N-1), j in 0:(N-1)], ℂ^N ← ℂ^N)
+ℂₙV(N::Int) = TensorMap([mod(i + 1, N) == j ? oneunit(ComplexF64) : zero(ComplexF64) for i in 0:(N-1), j in 0:(N-1)], ℂ^N ← ℂ^N)
 
 function energies(l)
     L = length(l)

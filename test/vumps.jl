@@ -2,23 +2,30 @@ module TestVUMPS
 using ..TestSetup
 using Test
 using MPSKit
+using MPSKitModels
 using MPSKitLEMPO
 using TensorKit
 
-@testset "VUMPS: Z2 gauge theory, link vs spin" begin
+@testset "VUMPS: ZN gauge theory, link vs spin" begin
+    for N in 2:4, L in 2:4
+        g = -3 .+ PeriodicArray(rand(L))
+        J = PeriodicArray(rand(L))
+        h = PeriodicArray(rand(L))
+        lat = InfiniteChain(L)
 
-    for N in [1], k in [3, 5, 7], g in [0.3, 0.5, 1.5], J in [0.2, 0.6, 2.5]
-        HS = infinite_z2_spin(N; g = g, J = J)
-        HL = infinite_z2_gauge(N; g = g, J = J)
+        H1 = @mpoham sum(J[i] * (ℤₙV⁺V(N){i,j} + ℤₙV⁺V(N)'{i,j}) + h[i] * (ℤₙU(N){i} + ℤₙU(N)'{i}) for (i, j) in nearest_neighbours(lat))
+        HL = InfiniteLEMPOHamiltonian(H1, [r -> g[i] * ℤₙf(r) for i in 1:L])
 
-        virtual_space = ℤ₂Space(0 => k, 1 => k)
-        ψ₀ = InfiniteMPS(physicalspace(HL), fill(virtual_space, N))
-        ψ, _ = find_groundstate(ψ₀, HL, VUMPS(; verbosity = 0))
+        HS = @mpoham sum(g[i] * (ℂₙU(N){i} + ℂₙU(N)'{i}) + J[i] * (ℂₙV(N){i} + ℂₙV(N)'{i}) + h[i+1] * (ℂₙU(N)'{i} * ℂₙU(N){j} + ℂₙU(N){i} * ℂₙU(N)'{j}) for (i, j) in nearest_neighbours(lat))
+
+        virtual_space = ZNSpace{N}(k => 2 for k in 1:N)
+        ψ₀ = InfiniteMPS(physicalspace(HL), fill(virtual_space, length(HL)))
+        ψ, _ = find_groundstate(ψ₀, HL, VUMPS(; verbosity=0, finalize=(iter, ψ, H, envs) -> changebonds(ψ, H, VUMPSSvdCut(; trscheme=truncerror(atol=1e-8)), envs), tol=1e-6))
         e1 = expectation_value(ψ, HL)
 
-        virtual_space = ℂ^(2 * k)
-        ψ₀ = InfiniteMPS(physicalspace(HS), fill(virtual_space, N))
-        ψ, _ = find_groundstate(ψ₀, HS, VUMPS(; verbosity = 0))
+        virtual_space = ℂ^(N * 2)
+        ψ₀ = InfiniteMPS(physicalspace(HS), fill(virtual_space, length(HS)))
+        ψ, _ = find_groundstate(ψ₀, HS, VUMPS(; verbosity=0, finalize=(iter, ψ, H, envs) -> changebonds(ψ, H, VUMPSSvdCut(; trscheme=truncerror(atol=1e-8)), envs), tol=1e-6))
         e2 = expectation_value(ψ, HS)
 
         @test e1 ≈ e2
