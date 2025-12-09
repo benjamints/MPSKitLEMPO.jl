@@ -30,3 +30,21 @@ function link_expectation(state, loc::Int, F::Function)
 end
 
 link_expectation(state, locs, F::Function) = sum(link_expectation(state, loc, F) for loc in locs)
+
+function attenuateLinks(ψ::InfiniteMPS, reps, eta)
+    rr = [x isa AbstractVector ? x : [x] for x in reps]
+    ALs = deepcopy(ψ.AL)
+    for i = eachindex(ALs)
+        flag = false
+        for (t1, t2) = fusiontrees(ALs[i])
+            if t2.uncoupled[1] in rr[i]
+                flag = true
+            else
+                ALs[i][t1, t2] .*= eta
+            end
+        end
+        !flag && @warn "Target rep not found on link $i"
+    end
+
+    return InfiniteMPS(ALs)
+end

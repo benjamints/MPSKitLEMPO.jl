@@ -2,21 +2,30 @@ module TestSetup
 using TensorKit, MPSKit, MPSKitLEMPO
 
 export finite_heisenberg_gauss, finite_heisenberg_link, infinite_heisenberg_link, infinite_heisenberg
-export infinite_z2_gauge, infinite_z2_spin
+export infinite_z2_gauge, infinite_z2_spin, energies
 
-function infinite_heisenberg(N::Int; spin::Real = 1 / 2)
+function energies(l)
+    L = length(l)
+    sums = zeros(2^L)
+    for (i, n) in enumerate(Iterators.product(ntuple(_ -> 0:1, L)...))
+        sums[i] = sum(l[i] * n[i] for i in 1:L)
+    end
+    return sums
+end
+
+function infinite_heisenberg(N::Int; spin::Real=1 / 2)
 
     SL = -spin * (spin + 1) *
-        ones(
-        SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
-    )
+         ones(
+             SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
+             SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
+         )
     SR = ones(
         SU2Space(1 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
+        SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
     )
 
-    Elt = Union{Missing, typeof(SL), scalartype(SL)}
+    Elt = Union{Missing,typeof(SL),scalartype(SL)}
     A = Vector{Matrix{Elt}}(undef, N)
 
     for n in 1:N
@@ -34,20 +43,20 @@ function infinite_heisenberg(N::Int; spin::Real = 1 / 2)
     return InfiniteMPOHamiltonian(A)
 end
 
-function finite_heisenberg_link(N::Int; spin::Real = 1 / 2, g::Real = 1.0)
+function finite_heisenberg_link(N::Int; spin::Real=1 / 2, g::Real=1.0)
     F(r) = 0.5 * g * r.j * (r.j + 1)
 
     SL = -spin * (spin + 1) *
-        ones(
-        SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
-    )
+         ones(
+             SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
+             SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
+         )
     SR = ones(
         SU2Space(1 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
+        SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
     )
 
-    Elt = Union{Missing, typeof(SL), scalartype(SL)}
+    Elt = Union{Missing,typeof(SL),scalartype(SL)}
     A = Vector{Matrix{Elt}}(undef, N)
 
     for n in 1:N
@@ -69,20 +78,20 @@ function finite_heisenberg_link(N::Int; spin::Real = 1 / 2, g::Real = 1.0)
     return FiniteLEMPOHamiltonian(HH, fill(F, N - 1))
 end
 
-function infinite_heisenberg_link(N::Int; spin::Real = 1 / 2, g::Real = 1.0)
+function infinite_heisenberg_link(N::Int; spin::Real=1 / 2, g::Real=1.0)
     F(r) = 0.5 * g * r.j * (r.j + 1)
 
     SL = -spin * (spin + 1) *
-        ones(
-        SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
-    )
+         ones(
+             SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
+             SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
+         )
     SR = ones(
         SU2Space(1 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
+        SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
     )
 
-    Elt = Union{Missing, typeof(SL), scalartype(SL)}
+    Elt = Union{Missing,typeof(SL),scalartype(SL)}
     A = Vector{Matrix{Elt}}(undef, N)
 
     for n in 1:N
@@ -103,18 +112,18 @@ function infinite_heisenberg_link(N::Int; spin::Real = 1 / 2, g::Real = 1.0)
 end
 
 
-function finite_heisenberg_gauss(N::Int; spin::Real = 1 / 2, g::Real = 1.0, J::Real = 1.0)
+function finite_heisenberg_gauss(N::Int; spin::Real=1 / 2, g::Real=1.0, J::Real=1.0)
     SL = -spin * (spin + 1) *
-        ones(
-        SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
-    )
+         ones(
+             SU2Space(0 => 1) ⊗ SU2Space(spin => 1) ←
+             SU2Space(spin => 1) ⊗ SU2Space(1 => 1)
+         )
     SR = ones(
         SU2Space(1 => 1) ⊗ SU2Space(spin => 1) ←
-            SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
+        SU2Space(spin => 1) ⊗ SU2Space(0 => 1)
     )
 
-    Elt = Union{Missing, typeof(SL), scalartype(SL)}
+    Elt = Union{Missing,typeof(SL),scalartype(SL)}
     A = Vector{Matrix{Elt}}(undef, N)
 
     for n in 1:N
@@ -138,13 +147,13 @@ function finite_heisenberg_gauss(N::Int; spin::Real = 1 / 2, g::Real = 1.0, J::R
     return FiniteMPOHamiltonian(A)
 end
 
-function infinite_z2_gauge(N::Int; g::Real = 1.0, J::Real = 1.0, h::Real = 1.0)
+function infinite_z2_gauge(N::Int; g::Real=1.0, J::Real=1.0, h::Real=1.0)
     SL = ones(ℤ₂Space(0 => 1) ⊗ ℤ₂Space(0 => 1, 1 => 1) ← ℤ₂Space(0 => 1, 1 => 1) ⊗ ℤ₂Space(1 => 1))
     SR = ones(ℤ₂Space(1 => 1) ⊗ ℤ₂Space(0 => 1, 1 => 1) ← ℤ₂Space(0 => 1, 1 => 1) ⊗ ℤ₂Space(0 => 1))
     SZ = ones(ℤ₂Space(0 => 1) ⊗ ℤ₂Space(0 => 1, 1 => 1) ← ℤ₂Space(0 => 1, 1 => 1) ⊗ ℤ₂Space(0 => 1))
     block(SZ, Irrep[ℤ₂](0)) .= -1.0
 
-    Elt = Union{Missing, typeof(SL), scalartype(SL)}
+    Elt = Union{Missing,typeof(SL),scalartype(SL)}
     A = Vector{Matrix{Elt}}(undef, N)
 
     for n in 1:N
@@ -165,11 +174,11 @@ function infinite_z2_gauge(N::Int; g::Real = 1.0, J::Real = 1.0, h::Real = 1.0)
     return InfiniteLEMPOHamiltonian(HH, fill(F, N))
 end
 
-function infinite_z2_spin(N::Int; g::Real = 1.0, J::Real = 1.0, h::Real = 1.0)
-    X = TensorMap([0.0 1.0 ; 1.0 0.0], ℂ^1 ⊗ ℂ^2 ← ℂ^2 ⊗ ℂ^1)
-    Z = TensorMap([1.0 0.0 ; 0.0 -1.0], ℂ^1 ⊗ ℂ^2 ← ℂ^2 ⊗ ℂ^1)
+function infinite_z2_spin(N::Int; g::Real=1.0, J::Real=1.0, h::Real=1.0)
+    X = TensorMap([0.0 1.0; 1.0 0.0], ℂ^1 ⊗ ℂ^2 ← ℂ^2 ⊗ ℂ^1)
+    Z = TensorMap([1.0 0.0; 0.0 -1.0], ℂ^1 ⊗ ℂ^2 ← ℂ^2 ⊗ ℂ^1)
 
-    Elt = Union{Missing, typeof(X), scalartype(X)}
+    Elt = Union{Missing,typeof(X),scalartype(X)}
     A = Vector{Matrix{Elt}}(undef, N)
 
     for n in 1:N
