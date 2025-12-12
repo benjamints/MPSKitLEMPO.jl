@@ -5,6 +5,7 @@ using MPSKit
 using MPSKitModels
 using MPSKitLEMPO
 using TensorKit
+using SUNRepresentations
 using LinearAlgebra
 
 @testset "Fermions with SU(N) flavor symmetry" begin
