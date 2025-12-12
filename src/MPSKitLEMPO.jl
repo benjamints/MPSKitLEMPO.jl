@@ -15,6 +15,7 @@ export FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian
 export LinkTransferMatrix
 export link_expectation, attenuateLinks
 export staggered_c⁺cN, staggered_c⁺cSUN
+export casimir
 
 include("utility.jl")
 include("finite_lempo.jl")

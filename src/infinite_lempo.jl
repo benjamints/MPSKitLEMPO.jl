@@ -37,6 +37,7 @@ function InfiniteLEMPOHamiltonian(T, Pspaces, Fs)
 end
 InfiniteLEMPOHamiltonian(Pspaces, Fs) = InfiniteLEMPOHamiltonian(Float64, Pspaces, Fs)
 
+Base.isfinite(x::InfiniteLEMPOHamiltonian) = false
 Base.parent(x::InfiniteLEMPOHamiltonian) = x.mpo.W
 Base.repeat(H::InfiniteLEMPOHamiltonian{T}, n::Int) where {T} = InfiniteLEMPOHamiltonian(repeat(H.mpo, n), repeat(H.Fs, n))
 

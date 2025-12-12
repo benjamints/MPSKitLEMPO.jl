@@ -41,6 +41,7 @@ end
 FiniteLEMPOHamiltonian(Pspaces, Fs) = FiniteLEMPOHamiltonian(Float64, Pspaces, Fs)
 
 Base.parent(x::FiniteLEMPOHamiltonian) = x.mpo.W
+Base.isfinite(x::FiniteLEMPOHamiltonian) = true
 
 function MPSKit.expectation_value(
         ψ::FiniteMPS, H::FiniteLEMPOHamiltonian,
