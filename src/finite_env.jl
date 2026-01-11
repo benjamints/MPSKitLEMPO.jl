@@ -11,7 +11,7 @@ function MPSKit.rightenv(ca::FiniteEnvironments{A, B, C, D}, ind, state) where {
         #we need to recalculate
         for j in a:-1:(ind + 1)
             above = isnothing(ca.above) ? state.AR[j] : ca.above.AR[j]
-            ca.GRs[j] = LinkTransferMatrix(ca.operator.Fs[j - 1]) * (TransferMatrix(above, ca.operator[j], state.AR[j]) *
+            ca.GRs[j] = LinkTransferMatrix(ca.operator.link_fcts[j - 1]) * (TransferMatrix(above, ca.operator[j], state.AR[j]) *
                 ca.GRs[j + 1])
             ca.rdependencies[j] = state.AR[j]
         end
@@ -30,7 +30,7 @@ function MPSKit.leftenv(ca::FiniteEnvironments{A, B, C, D}, ind, state) where {A
             ca.GLs[j + 1] = (
                 ca.GLs[j] *
                     TransferMatrix(above, ca.operator[j], state.AL[j])
-            ) * LinkTransferMatrix(ca.operator.Fs[j])
+            ) * LinkTransferMatrix(ca.operator.link_fcts[j])
             ca.ldependencies[j] = state.AL[j]
         end
     end

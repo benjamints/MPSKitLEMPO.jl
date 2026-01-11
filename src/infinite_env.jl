@@ -99,7 +99,7 @@ function MPSKit.left_cyclethrough!(
     leftinds = 1:index
     for site in eachindex(GL)
         if index == vsize
-            GL[site + 1][index] = (GL[site] * LinkTransferMatrix(H.Fs[site - 1])) * TransferMatrix(
+            GL[site + 1][index] = (GL[site] * LinkTransferMatrix(H.link_fcts[site - 1])) * TransferMatrix(
                 above.AL[site], H[site][leftinds, 1, 1, index], below.AL[site]
             )
         else
@@ -179,7 +179,7 @@ function MPSKit.right_cyclethrough!(
         ) * GR[site][rightinds]
 
         if index == 1
-            GR[site - 1] = LinkTransferMatrix(operator.Fs[site - 1]) * GR[site - 1]
+            GR[site - 1] = LinkTransferMatrix(operator.link_fcts[site - 1]) * GR[site - 1]
         end
     end
     return GR

@@ -16,11 +16,11 @@ function MPSKit.effective_excitation_renormalization_energy(H::InfiniteLEMPOHami
     E = Vector{scalartype(ϕ)}(undef, length(ϕ))
     for i in eachindex(E)
         E[i] = contract_mpo_expval(
-            ψ_left.AC[i], leftenv(lenvs, i, ψ_left) * LinkTransferMatrix(H.Fs[i - 1]), H[i], rightenv(lenvs, i, ψ_left)
+            ψ_left.AC[i], leftenv(lenvs, i, ψ_left) * LinkTransferMatrix(H.link_fcts[i - 1]), H[i], rightenv(lenvs, i, ψ_left)
         )
         if istopological(ϕ)
             E[i] += contract_mpo_expval(
-                ψ_right.AC[i], leftenv(renvs, i, ψ_right) * LinkTransferMatrix(H.Fs[i - 1]), H[i], rightenv(renvs, i, ψ_right)
+                ψ_right.AC[i], leftenv(renvs, i, ψ_right) * LinkTransferMatrix(H.link_fcts[i - 1]), H[i], rightenv(renvs, i, ψ_right)
             )
             E[i] /= 2
         end
@@ -30,7 +30,7 @@ end
 
 function MPSKit._effective_excitation_local_apply(site, ϕ, H::InfiniteLEMPOHamiltonian, E::Number, envs)
     B = ϕ[site]
-    GL = leftenv(envs.leftenvs, site, ϕ.left_gs) * LinkTransferMatrix(H.Fs[site - 1])
+    GL = leftenv(envs.leftenvs, site, ϕ.left_gs) * LinkTransferMatrix(H.link_fcts[site - 1])
     GR = rightenv(envs.rightenvs, site, ϕ.right_gs)
 
     # renormalize first -> allocates destination
@@ -42,7 +42,7 @@ function MPSKit._effective_excitation_local_apply(site, ϕ, H::InfiniteLEMPOHami
     # B to the left
     if site > 1 || ϕ isa InfiniteQP
         AR = ϕ.right_gs.AR[site]
-        GBL = envs.leftBenvs[site] * LinkTransferMatrix(H.Fs[site - 1])
+        GBL = envs.leftBenvs[site] * LinkTransferMatrix(H.link_fcts[site - 1])
         @plansor B′[-1 -2; -3 -4] += GBL[-1 4; -3 5] * AR[5 2; 1] * H[site][4 -2; 2 3] * GR[1 3; -4]
     end
 
@@ -78,7 +78,7 @@ function MPSKit.left_excitation_transfer_system(
             T = ProductTransferMatrix(
                 [
                     isodd(i) ?
-                        LinkTransferMatrix(H.Fs[div(i + 1, 2) - 1]) :
+                        LinkTransferMatrix(H.link_fcts[div(i + 1, 2) - 1]) :
                         TransferMatrix(exci.right_gs.AR[div(i + 1, 2)], H[div(i + 1, 2)][:, 1, 1, :], exci.left_gs.AL[div(i + 1, 2)])
                         for i in 1:(2 * length(H))
                 ]
@@ -139,7 +139,7 @@ function MPSKit.right_excitation_transfer_system(
             T = ProductTransferMatrix(
                 [
                     isodd(i) ?
-                        LinkTransferMatrix(H.Fs[div(i + 1, 2) - 1]) :
+                        LinkTransferMatrix(H.link_fcts[div(i + 1, 2) - 1]) :
                         TransferMatrix(exci.left_gs.AL[div(i + 1, 2)], H[div(i + 1, 2)][:, 1, 1, :], exci.right_gs.AR[div(i + 1, 2)])
                         for i in 1:(2 * length(H))
                 ]

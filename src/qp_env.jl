@@ -10,9 +10,9 @@ function MPSKit.environments(exci::InfiniteQP, H::InfiniteLEMPOHamiltonian, lenv
 
     zerovector!(lBs[1])
     for pos in 1:length(exci)
-        lBs[pos + 1] = (lBs[pos] * LinkTransferMatrix(H.Fs[pos - 1])) * TransferMatrix(AR[pos], H[pos], AL[pos]) /
+        lBs[pos + 1] = (lBs[pos] * LinkTransferMatrix(H.link_fcts[pos - 1])) * TransferMatrix(AR[pos], H[pos], AL[pos]) /
             cis(exci.momentum)
-        lBs[pos + 1] += (leftenv(lenvs, pos, exci.left_gs) * LinkTransferMatrix(H.Fs[pos - 1])) *
+        lBs[pos + 1] += (leftenv(lenvs, pos, exci.left_gs) * LinkTransferMatrix(H.link_fcts[pos - 1])) *
             TransferMatrix(exci[pos], H[pos], AL[pos]) / cis(exci.momentum)
 
         if istrivial(exci) && !isempty(ids) # regularization of trivial excitations
@@ -31,7 +31,7 @@ function MPSKit.environments(exci::InfiniteQP, H::InfiniteLEMPOHamiltonian, lenv
         rBs[pos - 1] += TransferMatrix(exci[pos], H[pos], AR[pos]) *
             rightenv(renvs, pos, exci.right_gs) * cis(exci.momentum)
 
-        rBs[pos - 1] = LinkTransferMatrix(H.Fs[pos - 1]) * rBs[pos - 1]
+        rBs[pos - 1] = LinkTransferMatrix(H.link_fcts[pos - 1]) * rBs[pos - 1]
 
         if istrivial(exci) && !isempty(ids)
             ρ_left = l_LR(exci.left_gs, pos)
@@ -53,7 +53,7 @@ function MPSKit.environments(exci::InfiniteQP, H::InfiniteLEMPOHamiltonian, lenv
 
     lB_cur = lBs[1]
     for i in 1:(length(exci) - 1)
-        lB_cur = (lB_cur * LinkTransferMatrix(H.Fs[i - 1])) * TransferMatrix(AR[i], H[i], AL[i]) / cis(exci.momentum)
+        lB_cur = (lB_cur * LinkTransferMatrix(H.link_fcts[i - 1])) * TransferMatrix(AR[i], H[i], AL[i]) / cis(exci.momentum)
 
         if istrivial(exci) && !isempty(ids)
             ρ_left = l_RL(exci.left_gs, i + 1)
@@ -68,7 +68,7 @@ function MPSKit.environments(exci::InfiniteQP, H::InfiniteLEMPOHamiltonian, lenv
 
     rB_cur = rBs[end]
     for i in length(exci):-1:2
-        rB_cur = LinkTransferMatrix(H.Fs[i - 1]) * (TransferMatrix(AL[i], H[i], AR[i]) * rB_cur) * cis(exci.momentum)
+        rB_cur = LinkTransferMatrix(H.link_fcts[i - 1]) * (TransferMatrix(AL[i], H[i], AR[i]) * rB_cur) * cis(exci.momentum)
 
         if istrivial(exci) && !isempty(ids)
             ρ_left = l_LR(exci.left_gs, i)
