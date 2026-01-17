@@ -54,3 +54,75 @@ function MPSKit.expectation_value(
     
     return dynamic_part + end_part
 end
+
+function Base.:*(H::FiniteLEMPOHamiltonian, mps::FiniteMPS)
+    N = check_length(H, mps)
+    @assert N > 2 "MPS should have at least three sites, to be implemented otherwise"
+    A = convert.(BlockTensorMap, [mps.AC[1]; mps.AR[2:end]])
+    A′ = similar(
+        A,
+        tensormaptype(
+            spacetype(mps), numout(eltype(mps)), numin(eltype(mps)),
+            promote_type(scalartype(H), scalartype(mps))
+        )
+    )
+    # left to middle
+    U = ones(scalartype(H), left_virtualspace(H, 1))
+    OL = link_mpo_tensor(
+        scalartype(H), right_virtualspace(mps, 1), right_virtualspace(H.mpo, 1), H.link_fcts[1]
+    )
+    @plansor a[-1 -2; -3 -4] := A[1][-1 2; 4] * H[1][1 -2; 2 5] * OL[4 5; -3 -4] * conj(U[1])
+    Q, R = qr_compact!(a)
+    A′[1] = TensorMap(Q)
+
+    for i in 2:(N ÷ 2)
+        OL = link_mpo_tensor(
+            scalartype(H), right_virtualspace(mps, i), right_virtualspace(H.mpo, i), H.link_fcts[i]
+        )
+        @plansor a[-1 -2; -3 -4] := R[-1; 1 2] * A[i][1 3; 4] * H[i][2 -2; 3 5] * OL[4 5; -3 -4]
+        Q, R = qr_compact!(a)
+        A′[i] = TensorMap(Q)
+    end
+
+    # right to middle
+    U = ones(scalartype(H), right_virtualspace(H, N))
+    OL = link_mpo_tensor(
+        scalartype(H), right_virtualspace(mps, N), right_virtualspace(H.mpo, N), H.link_fcts[N]
+    )
+    @plansor a[-1 -2; -3 -4] := A[end][-1 2; 3] * H[end][-2 -4; 2 4] * OL[3 4; -3 1] * U[1]
+    L, Q = lq_compact!(a)
+    A′[end] = transpose(TensorMap(Q), ((1, 3), (2,)))
+
+    for i in (N - 1):-1:(N ÷ 2 + 2)
+        OL = link_mpo_tensor(
+            scalartype(H), right_virtualspace(mps, i), right_virtualspace(H.mpo, i), H.link_fcts[i]
+        )
+        @plansor a[-1 -2; -3 -4] := A[i][-1 3; 1] * H[i][-2 -4; 3 2] * OL[1 2; 4 5] * L[4 5; -3]
+        L, Q = lq_compact!(a)
+        A′[i] = transpose(TensorMap(Q), ((1, 3), (2,)))
+    end
+
+    # connect pieces
+    OL = link_mpo_tensor(
+        scalartype(H), right_virtualspace(mps, N ÷ 2 + 1), right_virtualspace(H.mpo, N ÷ 2 + 1),
+        H.link_fcts[N ÷ 2 + 1]
+    )
+    @plansor a[-1 -2; -3] := R[-1; 1 2] * A[N ÷ 2 + 1][1 3; 4] * H[N ÷ 2 + 1][2 -2; 3 5] * OL[4 5; 6 7] * L[6 7; -3]
+    A′[N ÷ 2 + 1] = TensorMap(a)
+
+    return FiniteMPS(A′)
+end
+
+function link_mpo_tensor(T, mps_vspace, mpo_vspace, link_fct::Union{Missing,Function})
+    OL = zeros(T, mps_vspace ⊗ mpo_vspace ← mps_vspace ⊗ mpo_vspace)
+    for i=1:length(mpo_vspace)
+        OL[1,i,1,i] = id(T, mps_vspace ⊗ mpo_vspace[i])
+    end
+    if !ismissing(link_fct)
+        OL[1,1,1,end] = id(T, mps_vspace ⊗ mpo_vspace[1])
+        for (t1, t2) in fusiontrees(OL[1,1,1,end])
+            OL[1,1,1,end][t1, t2] .*= link_fct(t1.uncoupled[1])
+        end
+    end
+    return OL
+end
