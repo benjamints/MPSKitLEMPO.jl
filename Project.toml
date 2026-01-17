@@ -19,9 +19,9 @@ MPSKit = {rev = "main", url = "https://github.com/QuantumKitHub/MPSKit.jl"}
 [compat]
 BlockTensorKit = "0.3.1"
 Documenter = "1.16.1"
-MPSKit = "0.13.8"
+MPSKit = "0.13"
 MPSKitModels = "0.4.4"
 OhMyThreads = "0.8.3"
 SUNRepresentations = "0.3.3"
-TensorKit = "0.16"
+TensorKit = "0.15,0.16"
 Test = "1.11.0"
