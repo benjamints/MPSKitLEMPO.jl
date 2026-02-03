@@ -86,10 +86,7 @@ function Base.:*(H::FiniteLEMPOHamiltonian, mps::FiniteMPS)
 
     # right to middle
     U = ones(scalartype(H), right_virtualspace(H, N))
-    OL = link_mpo_tensor(
-        scalartype(H), right_virtualspace(mps, N), right_virtualspace(H.mpo, N), H.link_fcts[N]
-    )
-    @plansor a[-1 -2; -3 -4] := A[end][-1 2; 3] * H[end][-2 -4; 2 4] * OL[3 4; -3 1] * U[1]
+    @plansor a[-1 -2; -3 -4] := A[end][-1 2; -3] * H[end][-2 -4; 2 1] * U[1] # no OL on the right end
     L, Q = lq_compact!(a)
     A′[end] = transpose(TensorMap(Q), ((1, 3), (2,)))
 
@@ -110,7 +107,14 @@ function Base.:*(H::FiniteLEMPOHamiltonian, mps::FiniteMPS)
     @plansor a[-1 -2; -3] := R[-1; 1 2] * A[N ÷ 2 + 1][1 3; 4] * H[N ÷ 2 + 1][2 -2; 3 5] * OL[4 5; 6 7] * L[6 7; -3]
     A′[N ÷ 2 + 1] = TensorMap(a)
 
-    return FiniteMPS(A′)
+    without_end = FiniteMPS(A′)
+    if ismissing(H.link_fcts[N])
+        return without_end
+    else
+        last_irrep = keys(right_virtualspace(mps, N).dims)[1]
+        end_part = H.link_fcts[N](last_irrep) * mps
+        return without_end + end_part
+    end
 end
 
 function link_mpo_tensor(T, mps_vspace, mpo_vspace, link_fct::Union{Missing,Function})
