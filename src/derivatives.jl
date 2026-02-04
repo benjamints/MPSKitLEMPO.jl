@@ -17,6 +17,12 @@ end
 MPSKit.leftenv(envs::EnvironmentsContainer, site::Int, state) = envs.GL
 MPSKit.rightenv(envs::EnvironmentsContainer, site::Int, state) = envs.GR
 
+function MPSKit.C_hamiltonian(
+    site::Int, below::_HAM_MPS_TYPES, operator::FiniteLEMPOHamiltonian, 
+    above::_HAM_MPS_TYPES, envs)
+    return MPSKit.MPO_C_Hamiltonian(leftenv(envs, site, below) * TransferMatrix(below.AL[site], operator[site], below.AL[site]), rightenv(envs, site, below))
+end
+
 function MPSKit.AC_hamiltonian(
         site::Int, below::_HAM_MPS_TYPES, operator::FiniteLEMPOHamiltonian,
         above::_HAM_MPS_TYPES, envs
