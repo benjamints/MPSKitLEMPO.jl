@@ -162,7 +162,7 @@ function finite_heisenberg_gauss(N::Int; spin::Real=1 / 2, g::Real=1.0, J::Real=
 
         W[3, end] = g * (N + 1 - n) * SR
         W[1, 3] = SL
-        W[1, end] = 0.5 * g * (N + 1 - n) * 0.75
+        W[1, end] = 0.5 * g * (N + 1 - n) * spin * (spin + 1)
 
         A[n] = W
     end

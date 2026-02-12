@@ -9,7 +9,7 @@ Constructs an infinite LEMPO, represented as an MPO together with a vector of li
 """
 struct InfiniteLEMPOHamiltonian{O} <: AbstractMPO{O}
     mpo::InfiniteMPOHamiltonian{O}
-    link_fcts::PeriodicVector{Union{Missing, Function}}
+    link_fcts::PeriodicVector{Union{Missing,Function}}
 
     function InfiniteLEMPOHamiltonian(mpo::InfiniteMPOHamiltonian{O}, link_fcts) where {O}
         if length(link_fcts) != length(mpo)
@@ -52,12 +52,12 @@ Calculates the expectation value of an infinite LEMPO `H` in the infinite MPS st
 - `envs`: The environments for the MPS state (default: `environments(ψ, H)`).
 """
 function MPSKit.expectation_value(
-        ψ::InfiniteMPS, H::InfiniteLEMPOHamiltonian,
-        envs::AbstractMPSEnvironments = environments(ψ, H)
-    )
+    ψ::InfiniteMPS, H::InfiniteLEMPOHamiltonian,
+    envs::AbstractMPSEnvironments=environments(ψ, H)
+)
     return sum(1:length(ψ)) do i
         return contract_mpo_expval(
-            ψ.AC[i], envs.GLs[i] * LinkTransferMatrix(H.link_fcts[i - 1]), H[i][:, 1, 1, end], envs.GRs[i][end]
+            ψ.AC[i], envs.GLs[i][1], H[i][1, 1, 1, :], LinkTransferMatrix(H.link_fcts[i]) * envs.GRs[i]
         )
     end
 end

@@ -1,22 +1,18 @@
-# Conventions:
-# GL = ... * (link) * (MPO)
-# GR = (link) * (MPO) * ...
-# So when computing expecation values, derivatives etc. GL should be multiplied by link operator in addition to A
 function MPSKit.environments(
-        below::InfiniteMPS, operator::InfiniteLEMPOHamiltonian,
-        above::InfiniteMPS = below; kwargs...
-    )
+    below::InfiniteMPS, operator::InfiniteLEMPOHamiltonian,
+    above::InfiniteMPS=below; kwargs...
+)
     GLs, GRs = initialize_environments(below, operator.mpo, above)
     envs = InfiniteEnvironments(GLs, GRs)
     return recalculate!(envs, below, operator, above; kwargs...)
 end
 
 function MPSKit.recalculate!(
-        envs::InfiniteEnvironments, below::InfiniteMPS,
-        operator::InfiniteLEMPOHamiltonian,
-        above::InfiniteMPS = below;
-        kwargs...
-    )
+    envs::InfiniteEnvironments, below::InfiniteMPS,
+    operator::InfiniteLEMPOHamiltonian,
+    above::InfiniteMPS=below;
+    kwargs...
+)
     if !issamespace(envs, below, operator.mpo, above)
         # TODO: in-place initialization?
         GLs, GRs = initialize_environments(below, operator.mpo, above)
@@ -36,9 +32,9 @@ function MPSKit.recalculate!(
 end
 
 function MPSKit.compute_leftenvs!(
-        envs::InfiniteEnvironments, below::InfiniteMPS,
-        operator::InfiniteLEMPOHamiltonian, above::InfiniteMPS, alg
-    )
+    envs::InfiniteEnvironments, below::InfiniteMPS,
+    operator::InfiniteLEMPOHamiltonian, above::InfiniteMPS, alg
+)
     L = check_length(below, above, operator.mpo)
     GLs = envs.GLs
     vsize = length(first(GLs))
@@ -72,7 +68,7 @@ function MPSKit.compute_leftenvs!(
             # go through the unitcell, again subtracting fixpoints
             for site in 1:L
                 @plansor GLs[site][i][-1 -2; -3] -= GLs[site][i][1 -2; 2] *
-                    r_LL(above, site - 1)[2; 1] * l_LL(above, site)[-1; -3]
+                                                    r_LL(above, site - 1)[2; 1] * l_LL(above, site)[-1; -3]
             end
 
         else
@@ -91,30 +87,27 @@ function MPSKit.compute_leftenvs!(
 end
 
 function MPSKit.left_cyclethrough!(
-        index::Int, GL, below::InfiniteMPS, H::InfiniteLEMPOHamiltonian,
-        above::InfiniteMPS = below
-    )
+    index::Int, GL, below::InfiniteMPS, H::InfiniteLEMPOHamiltonian,
+    above::InfiniteMPS=below
+)
     # TODO: efficient transfer matrix slicing for large unitcells
     vsize = length(first(GL))
     leftinds = 1:index
     for site in eachindex(GL)
+        GL[site+1][index] = GL[site][leftinds] * TransferMatrix(
+            above.AL[site], H[site][leftinds, 1, 1, index], below.AL[site]
+        )
         if index == vsize
-            GL[site + 1][index] = (GL[site] * LinkTransferMatrix(H.link_fcts[site - 1])) * TransferMatrix(
-                above.AL[site], H[site][leftinds, 1, 1, index], below.AL[site]
-            )
-        else
-            GL[site + 1][index] = GL[site][leftinds] * TransferMatrix(
-                above.AL[site], H[site][leftinds, 1, 1, index], below.AL[site]
-            )
+            GL[site+1] = GL[site+1] * LinkTransferMatrix(H.link_fcts[site])
         end
     end
     return GL
 end
 
 function MPSKit.compute_rightenvs!(
-        envs::InfiniteEnvironments, below::InfiniteMPS,
-        operator::InfiniteLEMPOHamiltonian, above::InfiniteMPS, alg
-    )
+    envs::InfiniteEnvironments, below::InfiniteMPS,
+    operator::InfiniteLEMPOHamiltonian, above::InfiniteMPS, alg
+)
     L = check_length(above, operator.mpo, below)
     GRs = envs.GRs
     vsize = length(last(GRs))
@@ -132,7 +125,7 @@ function MPSKit.compute_rightenvs!(
 
     (L > 1) && right_cyclethrough!(vsize, GRs, below, operator, above) # populate other sites
 
-    for i in (vsize - 1):-1:1
+    for i in (vsize-1):-1:1
         prev = copy(GRs[end][i])
         zerovector!(GRs[end][i])
         right_cyclethrough!(i, GRs, below, operator, above)
@@ -149,7 +142,7 @@ function MPSKit.compute_rightenvs!(
             # go through the unitcell, again subtracting fixpoints
             for site in 1:L
                 @plansor GRs[site][i][-1 -2; -3] -= GRs[site][i][1 -2; 2] *
-                    l_RR(above, site + 1)[2; 1] * r_RR(above, site)[-1; -3]
+                                                    l_RR(above, site + 1)[2; 1] * r_RR(above, site)[-1; -3]
             end
         else
             if !isemptylevel(operator.mpo, i)
@@ -168,18 +161,18 @@ function MPSKit.compute_rightenvs!(
 end
 
 function MPSKit.right_cyclethrough!(
-        index::Int, GR, below::InfiniteMPS, operator::InfiniteLEMPOHamiltonian,
-        above::InfiniteMPS = below
-    )
+    index::Int, GR, below::InfiniteMPS, operator::InfiniteLEMPOHamiltonian,
+    above::InfiniteMPS=below
+)
     # TODO: efficient transfer matrix slicing for large unitcells
     for site in reverse(eachindex(GR))
         rightinds = index:length(GR[site])
-        GR[site - 1][index] = TransferMatrix(
+        GR[site-1][index] = TransferMatrix(
             above.AR[site], operator[site][index, 1, 1, rightinds], below.AR[site]
         ) * GR[site][rightinds]
 
         if index == 1
-            GR[site - 1] = LinkTransferMatrix(operator.link_fcts[site - 1]) * GR[site - 1]
+            GR[site-1] = LinkTransferMatrix(operator.link_fcts[site-1]) * GR[site-1]
         end
     end
     return GR

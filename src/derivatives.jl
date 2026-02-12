@@ -5,57 +5,26 @@ struct LEMPO_AC2 <: DerivativeOperator
     RE::TensorMap
 end
 
-struct EnvironmentsContainer{V <: GenericMPSTensor}
-    GL::V
-    GR::V
-end
-
-function EnvironmentsContainer(GL, GR)
-    return EnvironmentsContainer{typeof(V)}(GL, GR)
-end
-
-MPSKit.leftenv(envs::EnvironmentsContainer, site::Int, state) = envs.GL
-MPSKit.rightenv(envs::EnvironmentsContainer, site::Int, state) = envs.GR
-
 function MPSKit.C_hamiltonian(
-    site::Int, below::_HAM_MPS_TYPES, operator::FiniteLEMPOHamiltonian, 
+    site::Int, below::_HAM_MPS_TYPES, operator::Union{FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian}, 
     above::_HAM_MPS_TYPES, envs)
     return MPSKit.MPO_C_Hamiltonian(leftenv(envs, site, below) * TransferMatrix(below.AL[site], operator[site], below.AL[site]), rightenv(envs, site, below))
 end
 
 function MPSKit.AC_hamiltonian(
-        site::Int, below::_HAM_MPS_TYPES, operator::FiniteLEMPOHamiltonian,
+        site::Int, below::_HAM_MPS_TYPES, operator::Union{FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian},
         above::_HAM_MPS_TYPES, envs
     )
     return AC_hamiltonian(site, below, operator.mpo, above, envs)
 end
 
 function MPSKit.AC2_hamiltonian(
-        site::Int, below::_HAM_MPS_TYPES, operator::FiniteLEMPOHamiltonian,
+        site::Int, below::_HAM_MPS_TYPES, operator::Union{FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian},
         above::_HAM_MPS_TYPES, envs
     )
     return LEMPO_AC2(AC2_hamiltonian(site, below, operator.mpo, above, envs), operator.link_fcts[site], leftenv(envs, site, below)[1], rightenv(envs, site + 1, below)[end])
 end
 
-function MPSKit.AC_hamiltonian(
-        site::Int, below::_HAM_MPS_TYPES, operator::InfiniteLEMPOHamiltonian,
-        above::_HAM_MPS_TYPES, envs
-    )
-    envC = EnvironmentsContainer(leftenv(envs, site, below) * LinkTransferMatrix(operator.link_fcts[site - 1]), rightenv(envs, site, below))
-    return AC_hamiltonian(site, below, operator.mpo, above, envC)
-end
-
-function MPSKit.AC2_hamiltonian(
-        site::Int, below::_HAM_MPS_TYPES, operator::InfiniteLEMPOHamiltonian,
-        above::_HAM_MPS_TYPES, envs
-    )
-    envC = EnvironmentsContainer(leftenv(envs, site, below) * LinkTransferMatrix(operator.link_fcts[site - 1]), rightenv(envs, site + 1, below))
-    if ismissing(operator.link_fcts[site])
-        return AC2_hamiltonian(site, below, operator.mpo, above, envC)
-    else
-        return LEMPO_AC2(AC2_hamiltonian(site, below, operator.mpo, above, envC), operator.link_fcts[site], envC.GL[1], envC.GR[end])
-    end
-end
 
 function (P::LEMPO_AC2)(v::MPOTensor)
     if ismissing(P.F)
