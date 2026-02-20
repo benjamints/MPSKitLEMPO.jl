@@ -9,6 +9,10 @@ using MPSKit: AbstractTransferMatrix, TransferMatrix, FiniteEnvironments, Abstra
 using MPSKit: recalculate!, issamespace, environment_alg, check_length, isidentitylevel, isemptylevel, regularize, linsolve, jordanmpotensortype, SumSpace, eachspace, contract_mpo_expval, InfiniteQPEnvironments, BlockTensorMap
 using MPSKit: InfiniteQP, compute_leftenvs!, compute_rightenvs!, left_cyclethrough!, right_cyclethrough!, allocate_GBL, allocate_GBR, istrivial, left_excitation_transfer_system, right_excitation_transfer_system, regularize!, ProductTransferMatrix
 using MPSKit: Defaults, _effective_excitation_local_apply, istopological, GenericMPSTensor, leftenv, rightenv
+using MPSKit: GrassmannMPS
+using MPSKit.GrassmannMPS: rmul
+using TensorKitManifolds.Grassmann
+using TensorKitManifolds.Grassmann: GrassmannTangent, checkbase
 using MPSKitModels: LatticePoint
 
 export FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian
@@ -27,5 +31,6 @@ include("derivatives.jl")
 include("qp_env.jl")
 include("qp_alg.jl")
 include("mpskitmodels.jl")
+include("grassman.jl")
 
 end
