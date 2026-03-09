@@ -56,8 +56,19 @@ function MPSKit.expectation_value(
     envs::AbstractMPSEnvironments=environments(ψ, H)
 )
     return sum(1:length(ψ)) do i
-        return contract_mpo_expval(
-            ψ.AC[i], envs.GLs[i][1], H[i][1, 1, 1, :], LinkTransferMatrix(H.link_fcts[i]) * envs.GRs[i]
-        )
+        R = (LinkTransferMatrix(H.link_fcts[i-1]) * (TransferMatrix(ψ.AC[i], H[i], ψ.AC[i]) * envs.GRs[i]))[1]
+        L =  envs.GLs[i][1]
+        @tensor res = L[1 2; 3] * R[3 2; 1]
+        return res
     end
 end
+# function MPSKit.expectation_value(
+#     ψ::InfiniteMPS, H::InfiniteLEMPOHamiltonian,
+#     envs::AbstractMPSEnvironments=environments(ψ, H)
+# )
+#     return sum(1:length(ψ)) do i
+#         return contract_mpo_expval(
+#             ψ.AC[i], envs.GLs[i][1], H[i][1, 1, 1, :], LinkTransferMatrix(H.link_fcts[i]) * envs.GRs[i]
+#         )
+#     end
+# end

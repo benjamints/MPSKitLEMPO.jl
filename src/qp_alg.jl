@@ -1,3 +1,48 @@
+function MPSKit.effective_excitation_renormalization_energy(H::InfiniteLEMPOHamiltonian, ϕ, lenvs, renvs)
+    LEL, LER = LREnergies(ϕ.left_gs, H, lenvs)
+    _, RER = LREnergies(ϕ.right_gs, H, renvs)
+
+    if istopological(ϕ)
+        E = LEL .+ RER
+    else
+        E = LEL .+ LER
+    end
+    return E
+end
+
+function LREnergies(
+    ψ::InfiniteMPS, H::InfiniteLEMPOHamiltonian,
+    envs::AbstractMPSEnvironments=environments(ψ, H)
+)
+    TT = ProductTransferMatrix(
+        [
+        isodd(i) ?
+        LinkTransferMatrix(H.link_fcts[div(i + 1, 2)-1]) :
+        TransferMatrix(ψ.AR[div(i + 1, 2)], H[div(i + 1, 2)][:, 1, 1, :], ψ.AR[div(i + 1, 2)])
+        for i in 3:(2*length(H))
+    ]
+    ) * envs.GRs[end]
+    TT = TransferMatrix(ψ.AC[1], H[1], ψ.AC[1]) * TT
+    @tensor subs = envs.GLs[1][1 2; 3] * TT[3 2; 1]
+
+    energiesR = PeriodicVector(map(1:length(ψ)) do i
+        R = (LinkTransferMatrix(H.link_fcts[i-1])*(TransferMatrix(ψ.AC[i], H[i], ψ.AC[i])*envs.GRs[i]))[1]
+        L = envs.GLs[i][1]
+        @tensor res = L[1 2; 3] * R[3 2; 1]
+        return res
+    end)
+    energiesL = PeriodicVector(map(1:length(ψ)) do i
+        R = envs.GRs[i][end]
+        L = ((envs.GLs[i]*TransferMatrix(ψ.AC[i], H[i], ψ.AC[i]))*LinkTransferMatrix(H.link_fcts[i]))[end]
+        @tensor res = L[1 2; 3] * R[3 2; 1]
+        return res
+    end)
+
+    EL = [subs / 2 - sum(energiesL[1:k-1]) for k = 1:length(ψ)]
+    ER = [subs / 2 - sum(energiesR[k+1:end]) for k = 1:length(ψ)]
+    return EL, ER
+end
+
 function MPSKit.effective_excitation_hamiltonian(
     H::InfiniteLEMPOHamiltonian, ϕ::QP,
     envs=environments(ϕ, H),
@@ -133,4 +178,15 @@ function MPSKit.right_excitation_transfer_system(
         end
     end
     return found
+end
+
+# Quasiparticle expectation gap
+# ------------------------------
+function expectation_gap(ϕ::InfiniteQP, mpo::Union{InfiniteMPO,InfiniteMPOHamiltonian,InfiniteLEMPOHamiltonian},
+    lenvs::AbstractMPSEnvironments=environments(ϕ.left_gs, mpo), renvs::AbstractMPSEnvironments=environments(ϕ.right_gs, mpo))
+    qp_envs = environments(ϕ, mpo)
+    E = effective_excitation_renormalization_energy(mpo, ϕ, lenvs, renvs)
+    opψ = effective_excitation_hamiltonian(mpo, ϕ, qp_envs, E)
+
+    return dot(ϕ, opψ) / dot(ϕ, ϕ)
 end
