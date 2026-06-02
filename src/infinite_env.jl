@@ -11,7 +11,6 @@ function MPSKit.recalculate!(
     envs::InfiniteEnvironments, below::InfiniteMPS,
     operator::InfiniteLEMPOHamiltonian,
     above::InfiniteMPS=below;
-    timeroutput::TimerOutput = DISABLED_TIMER,
     kwargs...
 )
     if !issamespace(envs, below, operator.mpo, above)
@@ -23,18 +22,9 @@ function MPSKit.recalculate!(
 
     alg = environment_alg(below, operator.mpo, above; kwargs...)
 
-    tree_point = String[section.name for section in timeroutput.timer_stack]
     @sync begin
-        @spawn begin
-            sub_timeroutput = TimerOutput()
-            @timeit sub_timeroutput "left_envs" compute_leftenvs!(envs, below, operator, above, alg)
-            timeroutput.enabled && merge!(timeroutput, sub_timeroutput; tree_point)
-        end
-        @spawn begin
-            sub_timeroutput = TimerOutput()
-            @timeit sub_timeroutput "right_envs" compute_rightenvs!(envs, below, operator, above, alg)
-            timeroutput.enabled && merge!(timeroutput, sub_timeroutput; tree_point)
-        end
+        @spawn compute_leftenvs!(envs, below, operator, above, alg)
+        @spawn compute_rightenvs!(envs, below, operator, above, alg)
     end
     # normalize!(envs, below, operator, above)
 
