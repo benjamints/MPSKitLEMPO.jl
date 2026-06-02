@@ -13,6 +13,7 @@ SUNRepresentations = "1a50b95c-7aac-476d-a9ce-2bfc675fc617"
 TensorKit = "07d1fe3e-3e46-537d-9eac-e9e13d0d4cec"
 TensorKitManifolds = "11fa318c-39cb-4a83-b1ed-cdc7ba1e3684"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
 BlockTensorKit = "0.3.1"
@@ -24,3 +25,4 @@ SUNRepresentations = "0.3.3"
 TensorKit = "0.15,0.16"
 TensorKitManifolds = "0.7.4"
 Test = "1.11.0"
+TimerOutputs = "0.5.29"

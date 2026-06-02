@@ -1,3 +1,16 @@
+# default matches upstream MPSKit behavior
+const PREPARE_DERIVATIVES = Ref(true)
+
+"""
+    set_prepare_derivatives!(b::Bool)
+
+Toggle whether AC/AC2 effective Hamiltonians use MPSKit's prepared (fused)
+operator path. `false` restores the pre-0.13.4 direct-contraction path, which
+does fewer CGC/recoupling evaluations for non-abelian symmetries.
+"""
+set_prepare_derivatives!(b::Bool) = (PREPARE_DERIVATIVES[] = b)
+prepare_derivatives() = PREPARE_DERIVATIVES[]
+
 struct LEMPO_AC2 <: DerivativeOperator
     AC2::JordanMPO_AC2_Hamiltonian
     F::Union{Missing, Function}
@@ -15,14 +28,14 @@ function MPSKit.AC_hamiltonian(
         site::Int, below::_HAM_MPS_TYPES, operator::Union{FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian},
         above::_HAM_MPS_TYPES, envs
     )
-    return AC_hamiltonian(site, below, operator.mpo, above, envs)
+    return AC_hamiltonian(site, below, operator.mpo, above, envs; prepare=prepare_derivatives())
 end
 
 function MPSKit.AC2_hamiltonian(
         site::Int, below::_HAM_MPS_TYPES, operator::Union{FiniteLEMPOHamiltonian, InfiniteLEMPOHamiltonian},
         above::_HAM_MPS_TYPES, envs
     )
-    return LEMPO_AC2(AC2_hamiltonian(site, below, operator.mpo, above, envs), operator.link_fcts[site], leftenv(envs, site, below)[1], rightenv(envs, site + 1, below)[end])
+    return LEMPO_AC2(AC2_hamiltonian(site, below, operator.mpo, above, envs; prepare=prepare_derivatives()), operator.link_fcts[site], leftenv(envs, site, below)[1], rightenv(envs, site + 1, below)[end])
 end
 
 
