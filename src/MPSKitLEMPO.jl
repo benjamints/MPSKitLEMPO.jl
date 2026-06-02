@@ -32,5 +32,6 @@ include("qp_env.jl")
 include("qp_alg.jl")
 include("mpskitmodels.jl")
 include("grassman.jl")
+include("windowmps.jl")
 
 end
