@@ -49,7 +49,7 @@ end
         ψN₀ = FiniteMPS(physicalspace(HN), Vect[(FermionParity⊠Irrep[U₁])]((f, k) => 2 for k = -1:1, f = 0:1))
         ψN, _ = find_groundstate(ψN₀, HN, DMRG2(; trscheme=truncerror(; atol=1.0e-8), verbosity=0))
 
-        ψSUN₀ = FiniteMPS(physicalspace(HSUN), Vect[(FermionParity⊠Irrep[U₁]⊠SUNIrrep{N})]((f, k, [l == t ? 1 : 0 for l = 1:N-1]) => 2 for k = -1:1, f = 0:1, t = 0:N-1))
+        ψSUN₀ = FiniteMPS(physicalspace(HSUN), Vect[(FermionParity⊠Irrep[U₁]⊠SUNIrrep{N, N - 1})]((f, k, ntuple(l -> l == t ? 1 : 0, N - 1)) => 2 for k = -1:1, f = 0:1, t = 0:N-1))
         ψSUN, a, b = find_groundstate(ψSUN₀, HSUN, DMRG2(; trscheme=truncerror(; atol=1.0e-8), verbosity=0))
 
         isapprox(expectation_value(ψN, HN), expectation_value(ψSUN, HSUN))

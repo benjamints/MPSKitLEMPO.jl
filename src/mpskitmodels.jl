@@ -1,26 +1,13 @@
 Base.isodd(l::LatticePoint) = isodd(sum(l.coordinates))
 Base.iseven(l::LatticePoint) = iseven(sum(l.coordinates))
 
-function casimir(irrep::SUNIrrep{N}) where N
-    L = dynkin_label(irrep)
-    return sum(
-        sum(
-            ((min(i, j) * (N - max(i, j))) / N) *
-            L[i] * (L[j] + 2)
-            for j in 1:N-1
-        )
-        for i in 1:N-1
-    )/2
-end
-
-
 function staggered_cSUN(N, oddsite)
     if oddsite
-        P = Vect[FermionParity⊠U1Irrep⊠SUNIrrep{N}]((isodd(k - N), k - N, [m == k ? 1 : 0 for m in 1:(N-1)]) => 1 for k in 0:N)
+        P = Vect[FermionParity⊠U1Irrep⊠SUNIrrep{N, N - 1}]((isodd(k - N), k - N, ntuple(m -> m == k ? 1 : 0, N - 1)) => 1 for k in 0:N)
     else
-        P = Vect[FermionParity⊠U1Irrep⊠SUNIrrep{N}]((isodd(k), k, [m == k ? 1 : 0 for m in 1:(N-1)]) => 1 for k in 0:N)
+        P = Vect[FermionParity⊠U1Irrep⊠SUNIrrep{N, N - 1}]((isodd(k), k, ntuple(m -> m == k ? 1 : 0, N - 1)) => 1 for k in 0:N)
     end
-    V = Vect[FermionParity⊠U1Irrep⊠SUNIrrep{N}]((1, 1, [m == 1 ? 1 : 0 for m in 1:(N-1)]) => 1)
+    V = Vect[FermionParity⊠U1Irrep⊠SUNIrrep{N, N - 1}]((1, 1, ntuple(m -> m == 1 ? 1 : 0, N - 1)) => 1)
 
     cR = zeros(ComplexF64, V ⊗ P ← P)
     for (s, b) in blocks(cR)
