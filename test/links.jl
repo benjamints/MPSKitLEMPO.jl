@@ -36,4 +36,35 @@ end
     end
 end
 
+@testset "Product of link operators" begin
+    # F is the SU(2) Casimir, so a link operator on link `n` measures j_n(j_n+1), where
+    # j_n is the representation on link `n`. By Gauss' law this equals the total block
+    # spin (∑_{i≤n} Sᵢ)² of the physical chain, so a product of link operators must agree
+    # with the expectation value of the product of block-Casimir operators.
+    F(r) = r.j * (r.j + 1)
+    N = 6
+    virtual_space = SU2Space(l => 2 for l in 0:0.5:3)
+    for spin in [1 / 2, 1]
+        P = SU2Space(spin => 1)
+        lattice = fill(P, N)
+        ψ₀ = FiniteMPS(N, P, virtual_space)
+        H = finite_heisenberg_link(N; spin = spin)
+        ψ, = find_groundstate(ψ₀, H, DMRG(; verbosity = 0))
+
+        # a single-link product reduces to the plain single-link expectation value
+        for n in 1:(N-1)
+            @test link_expectation(ψ, (n => F,)) ≈ link_expectation(ψ, n, F)
+        end
+
+        # products of link operators match the Gauss-law (block-spin) computation
+        for (n1, n2) in [(2, 4), (1, 5), (3, 3)]
+            x_link = link_expectation(ψ, (n1 => F, n2 => F))
+            C1 = block_casimir(lattice, n1; spin = spin)
+            C2 = block_casimir(lattice, n2; spin = spin)
+            x_gauss = expectation_value(ψ, C1 * C2)
+            @test x_link ≈ x_gauss
+        end
+    end
+end
+
 end

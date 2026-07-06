@@ -31,6 +31,50 @@ end
 
 link_expectation(state, locs, F::Function) = sum(link_expectation(state, loc, F) for loc in locs)
 
+"""
+link_expectation(state, ops)
+
+Calculate the expectation value of a product of link operators acting on different
+links of `state`.
+
+# Arguments
+- `state`: The MPS state.
+- `ops`: A collection of pairs `loc::Int => F::Function` (e.g. `(n1 => F1, n2 => F2)`).
+
+# Example
+```julia
+link_expectation(state, (n1 => F1, n2 => F2))
+link_expectation(state, n1 => F1, n2 => F2)
+```
+"""
+function link_expectation(state, ops)
+    prs = sort(collect(ops); by = first)
+    isempty(prs) && throw(ArgumentError("no link operators provided"))
+
+    # A link operator at bond `loc` is diagonal in the bond charge sector `c`, acting
+    # as multiplication by `F(c)`. To evaluate a product of such operators on distinct
+    # bonds we transfer a bond environment through the left-canonical tensors between
+    # consecutive links, applying each `F` at its bond, and finally close with the
+    # center matrix. This reduces exactly to the single-link formula for one operator.
+    first_loc = first(prs[1])
+    E = MPSKit.l_LL(state, first_loc + 1) # identity on the first bond
+    prev = first_loc
+    for (loc, F) in prs
+        for j in (prev + 1):loc
+            E = E * TransferMatrix(state.AL[j])
+        end
+        for (t1, t2) in fusiontrees(E)
+            E[t1, t2] .*= F(t1.uncoupled[1])
+        end
+        prev = loc
+    end
+
+    C = state.C[prev]
+    return @tensor E[a; b] * C[b; c] * conj(C[a; c])
+end
+
+link_expectation(state, op::Pair, ops::Pair...) = link_expectation(state, (op, ops...))
+
 function attenuateLinks(ψ::InfiniteMPS, reps, eta)
     rr = [x isa AbstractVector ? x : [x] for x in reps]
     ALs = deepcopy(ψ.AL)

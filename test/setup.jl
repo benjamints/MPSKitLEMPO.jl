@@ -4,6 +4,7 @@ using TensorKit, MPSKit, MPSKitLEMPO
 export finite_heisenberg_gauss, finite_heisenberg_link, infinite_heisenberg_link, infinite_heisenberg
 export infinite_z2_gauge, infinite_z2_spin, energies
 export ℤₙU, ℤₙV⁺V, ℂₙU, ℂₙV, ℤₙf
+export spin_dot, block_casimir
 
 function ℤₙV(N::Int)
     P = ZNSpace{N}(k => 1 for k in 1:N)
@@ -36,6 +37,35 @@ function energies(l)
         sums[i] = sum(l[i] * n[i] for i in 1:L)
     end
     return sums
+end
+
+# `S_i ⋅ S_j` as a two-site operator, using the same spin-tensor normalization as the
+# Heisenberg models below (so that on-site `S_i²` equals `spin*(spin+1)`).
+function spin_dot(spin::Real=1 / 2)
+    P = SU2Space(spin => 1)
+    SL = -spin * (spin + 1) *
+         ones(SU2Space(0 => 1) ⊗ P ← P ⊗ SU2Space(1 => 1))
+    SR = ones(SU2Space(1 => 1) ⊗ P ← P ⊗ SU2Space(0 => 1))
+    SLr = MPSKit.removeunit(SL, 1)
+    SRr = MPSKit.removeunit(SR, 4)
+    @tensor SS[-1 -2; -3 -4] := SLr[-1; -3 v] * SRr[v -2; -4]
+    return SS
+end
+
+# Gauss-law operator: the squared total block spin `C_n = (∑_{i≤n} Sᵢ)²`, whose value on
+# an SU(2)-symmetric MPS is the Casimir `j(j+1)` of the representation flowing on link `n`.
+# `C_n = ∑_{i≤n} Sᵢ² + 2 ∑_{i<j≤n} Sᵢ⋅Sⱼ`, acting as the identity beyond site `n`.
+function block_casimir(lattice, n::Int; spin::Real=1 / 2)
+    P = first(lattice)
+    SS = spin_dot(spin)
+    ops = Pair[]
+    for i in 1:n
+        push!(ops, (i,) => (spin * (spin + 1)) * id(P))   # self term Sᵢ²
+        for j in (i+1):n
+            push!(ops, (i, j) => 2.0 * SS)                # cross term 2 Sᵢ⋅Sⱼ
+        end
+    end
+    return FiniteMPOHamiltonian(lattice, ops)
 end
 
 function infinite_heisenberg(N::Int; spin::Real=1 / 2)
