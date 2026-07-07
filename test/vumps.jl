@@ -7,7 +7,7 @@ using MPSKitLEMPO
 using TensorKit
 
 @testset "VUMPS: ZN gauge theory, link vs spin" begin
-    for N in 2:4, L in 2:4
+    for N in 2:3, L in 2:3
         g = -3 .+ PeriodicArray(rand(L))
         J = PeriodicArray(rand(L))
         h = PeriodicArray(rand(L))

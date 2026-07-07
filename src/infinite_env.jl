@@ -11,6 +11,8 @@ function MPSKit.recalculate!(
     envs::InfiniteEnvironments, below::InfiniteMPS,
     operator::InfiniteLEMPOHamiltonian,
     above::InfiniteMPS=below;
+    timeroutput=nothing, # captured here so it is not forwarded to `environment_alg`
+    # (MPSKit ≥0.13.13 threads a `timeroutput` kwarg through `recalculate!`)
     kwargs...
 )
     if !issamespace(envs, below, operator.mpo, above)
